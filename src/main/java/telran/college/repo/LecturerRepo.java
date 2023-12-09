@@ -9,12 +9,11 @@ import telran.college.dto.*;
 import telran.college.entities.*;
 
 public interface LecturerRepo extends JpaRepository<Lecturer, Long> {
-@Query(value="select sl.name as name, sum(hours) as hours from "
-		+ "students_lecturers sl join subjects sb on sl.id=sb.lecturer_id "
-		+ "group by sl.name order by sum(hours) desc limit :nLecturers", nativeQuery=true)
+@Query(value="select lecturer.name as name, sum(hours) as hours from "
+		+ "Subject subject  "
+		+ "group by lecturer.name order by sum(hours) desc limit :nLecturers")
 	List<LecturerHours> findLecturersMostHours(int nLecturers);
 /******************************************************************/
-@Query(value="select name, phone from students_lecturers where city=:city and dtype='Lecturer'", nativeQuery = true)
-List<NamePhone> findLecturersCity(String city);
+List<NamePhone> findByCity(String city);
 
 }
