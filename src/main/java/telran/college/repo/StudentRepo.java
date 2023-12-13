@@ -9,9 +9,7 @@ import telran.college.dto.*;
 import telran.college.entities.*;
 
 public interface StudentRepo extends JpaRepository<Student, Long> {
-	String JOIN_STUDENTS_MARKS = "FROM students_lecturers st join marks m on stid=st.id ";
-	String JOIN_ALL = JOIN_STUDENTS_MARKS
-			+ "join subjects sb on sb.id=suid ";
+	
 	/**********************/
 	@Query("SELECT student.name FROM Mark where subject.type=:type"
 			+ " group by student.name order by avg(score) desc limit :nStudents")
