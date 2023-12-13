@@ -12,5 +12,14 @@ public interface CollegeService {
 	List<NamePhone> studentsBurnMonth(int month);
 	List<NamePhone> lecturersCity(String city);
 	List<SubjectNameScore> subjectsScores(String studentName);
+	PersonDto addStudent(PersonDto personDto);
+	PersonDto addLecturer(PersonDto personDto);
+	SubjectDto addSubject(SubjectDto subjectDto);
+	MarkDto addMark(MarkDto markDto);
+	PersonDto updateStudent(PersonDto personDto);
+	PersonDto updateLecturer(PersonDto personDto);
+	PersonDto deleteLecturer(long id);
+	SubjectDto deleteSubject(long id);
+	List<PersonDto> deleteStudentsHavingScoresLess(int nScores);
 	
 }

@@ -25,7 +25,7 @@ List<String> findBestStudentsSubjectType(SubjectType type, int nStudents);
 			+ "group by student.name, student.city having count(mark.score) < :scoresThreshold")
 	List<StudentCity> findStudentsScoresLess(int scoresThreshold);
 	/*************************************/
-	@Query(value="SELECT st.name as name, st.phone as phone from Student st"
+	@Query(value="SELECT  st.name as name,  st.phone as phone from Student st"
 			+ " where EXTRACT (MONTH FROM st.birthDate) = :month")
 	List<NamePhone> findStudentsBurnMonth(int month);
 	/************************************************/
