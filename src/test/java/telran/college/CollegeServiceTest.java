@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.jdbc.Sql;
+import org.springframework.transaction.UnexpectedRollbackException;
 
 import telran.college.dto.*;
 import telran.college.entities.*;
@@ -237,6 +238,34 @@ MarkRepo markRepo;
 				.toArray(PersonDto[]::new);
 		assertArrayEquals(expected, actual);
 		assertNull(studentRepo.findById(128l).orElse(null));
+	}
+	@Test
+	void sqlRequestTest() {
+		QueryDto queryDto = new QueryDto("select * from students_lecturers", QueryType.SQL);
+		System.out.println(collegeService.anyQuery(queryDto));
+		
+		
+	}
+	@Test
+	void sqlRequestWrongRest() {
+		QueryDto queryDto = new QueryDto("select * from students", QueryType.SQL);
+		System.out.println(collegeService.anyQuery(queryDto));
+	}
+	@Test
+	void jpqlRequestTest() {
+		QueryDto queryDto = new QueryDto("select student from Student student", QueryType.JPQL);
+		System.out.println(collegeService.anyQuery(queryDto));
+		
+		
+	}
+	@Test
+	void jpqlRequestWrongRest() {
+		try {
+			QueryDto queryDto = new QueryDto("select student from Student", QueryType.JPQL);
+			System.out.println(collegeService.anyQuery(queryDto));
+		} catch (UnexpectedRollbackException e) {
+			System.out.println(e.getMessage());
+		}
 	}
 
 }
