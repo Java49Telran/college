@@ -9,6 +9,8 @@ import telran.college.dto.NameScore;
 import telran.college.entities.*;
 
 public interface SubjectRepo extends JpaRepository<Subject, Long> {
+
+	List<Subject> findByLecturerId(long id);
 	
 	
 }

@@ -2,6 +2,7 @@ package telran.college.service;
 
 import java.util.List;
 
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -36,7 +37,7 @@ public class CollegeServiceImpl implements CollegeService {
 	@Override
 	public List<StudentCity> studentsScoresLess(int nThreshold) {
 		
-		return studentRepo.findStudentsScoresLess(nThreshold);
+		return studentRepo.findStudentCitiesScoresLess(nThreshold);
 	}
 	@Override
 	public List<NamePhone> studentsBurnMonth(int month) {
@@ -57,7 +58,7 @@ public class CollegeServiceImpl implements CollegeService {
 	@Transactional(readOnly = false)
 	public PersonDto addStudent(PersonDto personDto) {
 		if(studentRepo.existsById(personDto.id())) {
-			throw new IllegalStateException(personDto.id() + " already exists");
+			throw new IllegalStateException("student " + personDto.id() + " already exists");
 		}
 		studentRepo.save(new Student(personDto));
 		return personDto;
@@ -65,67 +66,103 @@ public class CollegeServiceImpl implements CollegeService {
 	@Override
 	@Transactional(readOnly = false)
 	public PersonDto addLecturer(PersonDto personDto) {
-		// TODO Auto-generated method stub
-		return null;
+		if(lecturerRepo.existsById(personDto.id())) {
+			throw new IllegalStateException("lecturer " + personDto.id() + " already exists");
+		}
+		lecturerRepo.save(new Lecturer(personDto));
+		return personDto;
 	}
 	@Override
 	@Transactional(readOnly = false)
 	public SubjectDto addSubject(SubjectDto subjectDto) {
+		if(subjectRepo.existsById(subjectDto.id())) {
+			throw new IllegalStateException("subject " + subjectDto.id() + " already exists");
+		}
 		Lecturer lecturer = null;
 		if(subjectDto.lecturerId() != null) {
-			lecturer = lecturerRepo.findById(subjectDto.lecturerId())
-					.orElseThrow(() -> new NotFoundException(subjectDto.lecturerId() + "not exists"));
+			lecturer = findLecturer(subjectDto.lecturerId());
 		}
 		Subject subject = new Subject(subjectDto);
 		subject.setLecturer(lecturer);
 		subjectRepo.save(subject);
 		return subjectDto;
 	}
+	private Lecturer findLecturer(long id) {
+		return lecturerRepo.findById(id)
+				.orElseThrow(() -> new NotFoundException("lecturer " + id + "not exists"));
+	}
+	private Student findStudent(long id) {
+		return studentRepo.findById(id)
+				.orElseThrow(() -> new NotFoundException("student " + id + "not exists"));
+	}
 	@Override
 	@Transactional(readOnly = false)
 	public MarkDto addMark(MarkDto markDto) {
-		// TODO Auto-generated method stub
-		return null;
+		Student student = findStudent(markDto.studentId());
+		Subject subject = findSubject(markDto.subjectId());
+		Mark mark = new Mark(student, subject, markDto.score());
+		markRepo.save(mark);
+		return markDto;
 	}
 	@Override
 	@Transactional(readOnly = false)
 	public PersonDto updateStudent(PersonDto personDto) {
-		Student student = studentRepo.findById(personDto.id())
-				.orElseThrow(() -> new NotFoundException(personDto.id() + " not exists"));
-		student.setCity(personDto.city());
-		student.setPhone(personDto.phone());
+		return updatePerson(personDto, studentRepo, "student");
+	}
+	private  PersonDto updatePerson(PersonDto personDto, JpaRepository<? extends Person, Long> repo,
+			String personRole) {
+		Person person = repo.findById(personDto.id())
+				.orElseThrow(() ->
+				new NotFoundException(String.format("%s with id %d doesn't exist",
+						personRole, personDto.id())));
+		person.setCity(personDto.city());
+		person.setPhone(personDto.phone());
 		return personDto;
 	}
 	@Override
 	@Transactional(readOnly = false)
 	public PersonDto updateLecturer(PersonDto personDto) {
-		// TODO Auto-generated method stub
-		return null;
+		
+		return updatePerson(personDto, lecturerRepo, "lecturer");
 	}
 	@Override
 	@Transactional(readOnly = false)
 	public PersonDto deleteLecturer(long id) {
-		//find Lecturer by id (with possible NotFoundException)
-		//find all subjects with a given lecturer
-		// update all subjects with being deleted lecturer by setting null in field Lecturer
-		//lecturerRepo.delete(lecturer)
-		//returns lecturer.build();
-		return null;
+		Lecturer lecturer = findLecturer(id);
+		List<Subject> subjects = subjectRepo.findByLecturerId(id);
+		subjects.forEach(s -> s.setLecturer(null));
+		lecturerRepo.delete(lecturer);
+		return lecturer.build();
 	}
 	@Override
 	@Transactional(readOnly = false)
 	public SubjectDto deleteSubject(long id) {
-		//find Subject by id (with possible NotFoundException)
-		// delete all marks with the subject
-		//delete subject
-		//returns subject.build();
-		return null;
+		Subject subject = findSubject(id);
+		List<Mark> marks = markRepo.findBySubjectId(id);
+		marks.forEach(markRepo::delete);
+		subjectRepo.delete(subject);
+		return subject.build();
+	}
+	private Subject findSubject(long id) {
+		return subjectRepo.findById(id).
+				orElseThrow(() -> new NotFoundException(String.format("subject %d not found",
+						id)));
 	}
 	@Override
 	@Transactional(readOnly = false)
 	public List<PersonDto> deleteStudentsHavingScoresLess(int nScores) {
-		// TODO Auto-generated method stub
-		return null;
+		List<Student> students = getStudentsHavingScoresLess(nScores);
+		students.forEach(this::deleteStudent);
+		return students.stream().map(Student::build).toList();
+	}
+	private List<Student> getStudentsHavingScoresLess(int nScores) {
+		
+		return studentRepo.findStudentsScoresLess(nScores);
+	}
+	void deleteStudent(Student student) {
+		List<Mark> marks = markRepo.findByStudentId(student.getId());
+		marks.forEach(markRepo::delete);
+		studentRepo.delete(student);
 	}
 
 }
